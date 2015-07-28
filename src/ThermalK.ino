@@ -1,4 +1,64 @@
-//define the pins for the thermistors
+////////////////////////////////////////////////////////////////////////////
+/*
+    Thermal Conductivity Monitor
+
+    Version 0.2 - 20150728
+  
+    Copyight (C) 2015 Sam Belden, Nicola Ferralis
+    sbelden@mit.edu, ferralis@mit.edu
+ 
+ This program (source code and binaries) is free software; 
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software 
+ Foundation, in version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You can find a complete copy of the GNU General Public License at:
+ 
+ http://www.gnu.org/licenses/gpl.txt 
+*/
+//////////////////////////////////////////////////////////////////////////
+
+
+//-------------------------------------------------------------------------------
+// TO BE USED ONLY FOR CALIBRATION OF REAL TIME CLOCK. 
+//  The next #define TIMECAL line should remain commented for normal operations
+//  Uncomment ONLY for calibration of real time clock. 
+
+//  Instructions:
+//    0. Make sure the Real Time Clock hardware setup is in place. 
+//    1. Compile this program with the "#define TIMECAL" line uncommented.
+//    2. Upload but DO NOT open the Serial monitor.
+//    3. Uncomment the line "#define TIMECAL".
+//    4. Comment and upload.
+//    5. Verify the correct date from the Serial monitor.
+//-------------------------------------------------------------------------------
+//#define TIMECAL  //Uncomment for calibration of real time clock. Otherwise leave commented.
+
+#include <Wire.h>
+#include <SPI.h>
+#include "RTClib.h"
+
+//-------------------------------------------------------------------------------
+// Thermal conductivity parameters
+//-------------------------------------------------------------------------------
+  // parameters of thermal conductivity measurement
+  // Q = heat input (watts)
+  // L = thickness of sample
+  // A = surface area/contact area of sample
+  // deltaT = change in Temp from hot to cold side of sample
+float Q = 10.11;
+float L = 0.00635;
+float A = 0.00316692;
+
+
+//-------------------------------------------------------------------------------
+// Define pins and parameters for the thermistors
+//-------------------------------------------------------------------------------
 #define therm1 A0
 #define therm2 A1
 #define therm3 A2
@@ -15,19 +75,42 @@
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000 
 
-/////////////////////////////////////
+//-------------------------------------------------------------------------------
 //  SYSTEM defined variables
-/////////////////////////////////////
+//-------------------------------------------------------------------------------
 
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
 float TmediumInitial = 0.0;
 
+//-------------------------------------------------------------------------------
+//Real time chip
+//-------------------------------------------------------------------------------
 
-/////////////////////////////////////
+RTC_DS1307 rtc; // define the Real Time Clock object
+DateTime now;   // New RTC library
+
+//-------------------------------------------------------------------------------
 //  SETUP routine
-/////////////////////////////////////
+//-------------------------------------------------------------------------------
 void setup() { 
   Serial.begin(9600);
+
+  //----------------------------------------
+  // get the time from the RTC
+  //----------------------------------------
+  Wire.begin();  
+  rtc.begin();
+  Serial.println();
+  
+  if (! rtc.isrunning()) {
+    Serial.println("RTC is NOT running!");
+  }
+
+#ifdef TIMECAL
+    rtc.adjust(DateTime(__DATE__, __TIME__));
+    Serial.println("RTC is syncing!");
+#endif
+  
     
   TmediumInitial = Tread(therm3);
   Serial.println("(1) Start Acquisition; (2) Stop acquisition; (3) reset ambient DeltaT ambient ");
@@ -35,9 +118,9 @@ void setup() {
 }
 
 
-/////////////////////////////////////
+//-------------------------------------------------------------------------------
 //  Indefinite loop
-/////////////////////////////////////
+//-------------------------------------------------------------------------------
 
 void loop() {
    
@@ -69,9 +152,9 @@ void loop() {
 
 
 
-/////////////////////////////////////////////////////
+//-------------------------------------------------------------------------------
 // Acquisition Routine
-/////////////////////////////////////////////////////
+//-------------------------------------------------------------------------------
 
 void Acquisition(float offset) {
    
@@ -109,9 +192,9 @@ void Acquisition(float offset) {
 }
 
 
-/////////////////////////////////////////////////////
+//-------------------------------------------------------------------------------
 // Read temperature from thermistor  
-/////////////////////////////////////////////////////
+//-------------------------------------------------------------------------------
 
 float Tread(int THERMISTORPIN) { 
   int samples[NUMSAMPLES];
