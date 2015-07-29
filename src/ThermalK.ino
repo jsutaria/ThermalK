@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.3 - 20150728
+    Version 0.5 - 20150728
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -43,16 +43,23 @@
 #include <Wire.h>
 #include <SPI.h>
 #include "RTClib.h"
+#include <LiquidCrystal.h>
 
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.3 - 20150728";
+String versProg = "0.5 - 20150728";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
+
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
 float TmediumInitial = 0.0;
 
+//-------------------------------------------------------------------------------
+//  LCD display 
+//-------------------------------------------------------------------------------
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+//#define LCD       //if commented, runs on regular serial
 
 //-------------------------------------------------------------------------------
 // Thermal conductivity parameters
@@ -75,8 +82,6 @@ float A = 0.00316692;
 #define SDshield 10
 char cfgFile[]="ThermalK.cfg";
 const int chipSelect = SDshield;
-boolean sd = true;     // enable SD support
-boolean sds = false;    //switch SD on/off
 char nameFile[13];
 char nameFileData[13];
 char nameFileSummary[13]; 
@@ -111,17 +116,24 @@ DateTime now;   // New RTC library
 //  SETUP routine
 //-------------------------------------------------------------------------------
 void setup() { 
-  Serial.begin(9600);
+
+#ifdef LCD
+#else
+  Serial.begin(9600); 
+#endif  
+
+#ifdef LCD
+  lcd.begin(16, 2);
+#endif
   //----------------------------------------
   // get the time from the RTC
   //----------------------------------------
   //Wire1.begin(); //For Arduino DUE
   Wire.begin();  //For Arduino AVR  
   rtc.begin();
-  Serial.println();
   
   if (! rtc.isrunning()) {
-    Serial.println("RTC is NOT running!");
+    //Serial.println("RTC is NOT running!");
   }
 
 #ifdef TIMECAL
@@ -134,22 +146,24 @@ void setup() {
   //----------------------------------------  
   // Initialization SD card
   //----------------------------------------    
-  Serial.print("Initializing SD card... ");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(53, OUTPUT);    //Arduino boards
-
+#ifdef LCD
+#else
+  Serial.print("Initializing SD card... ");
+#endif
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
+#ifdef LCD
+#else    
     Serial.println("Card failed, or not present.");
     Serial.println("SD card support disabled.");
     Serial.println();
-    sd=false;
+#endif
   }
   else
   {
-    Serial.println("Card initialized.");
-    Serial.println();
 
     // to use today's date as the filename:
     //nameFile2(0).toCharArray(nameFile, 13);
@@ -159,15 +173,24 @@ void setup() {
 
     nameFile2(1).toCharArray(nameFileData, 13);
     nameFile2(2).toCharArray(nameFileSummary, 13);
+
+#ifdef LCD
+#else   
+    Serial.println("Card initialized.");
     Serial.print("Saving data into: ");
     Serial.println(nameFileData);
     Serial.print("Saving summary into: ");
     Serial.println(nameFileSummary);
+    Serial.println();
+#endif  
   }
     
   TmediumInitial = Tread(therm3);
+#ifdef LCD
+#else   
   Serial.println("(1) Start Acquisition; (2) Stop acquisition; (3) Reset ");
   Serial.println();
+#endif
 }
 
 
@@ -181,22 +204,27 @@ void loop() {
   
   if (Serial.available() > 0) { 
     inSerial = Serial.read();
-
+#ifdef LCD
+#else
     Serial.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
-    
-    //if(sd==true && sds == true) {
+#endif
+
       File dataFile = SD.open(nameFileData, FILE_WRITE);
       dataFile.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
       dataFile.close();
-    //}
 
+#ifdef LCD
+#else
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Start");
+#endif
     
     if(inSerial==49)
       { float offset = (float) millis()/1000;
       
       File dataFile = SD.open(nameFileData, FILE_WRITE);
-
-      
+  
       while(inSerial!=50)
         {
         inSerial = Serial.read(); 
@@ -210,7 +238,10 @@ void loop() {
         dataFile.println();
         dataFile.close();
         summarySD(offset);
+#ifdef LCD
+#else   
       Serial.println();
+#endif
       }
   }
 }
@@ -222,9 +253,6 @@ void loop() {
 //-------------------------------------------------------------------------------
 
 void Acquisition(float offset, File dataFile) {
-   
-  Serial.print((float) millis()/1000 - offset);
-  Serial.print(", ");
  
   float T1 = Tread(therm1);
   float T2 = Tread(therm2);
@@ -241,7 +269,15 @@ void Acquisition(float offset, File dataFile) {
   float deltaT = T3 - T1;
   float conductivity = (Q*L)/(A*deltaT);
 
-  
+#ifdef LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TK = ");
+  lcd.print(conductivity);
+
+#else
+  Serial.print((float) millis()/1000 - offset);
+  Serial.print(", ");
   Serial.print(T1);
   Serial.print(", ");
   Serial.print(T2);
@@ -250,6 +286,7 @@ void Acquisition(float offset, File dataFile) {
   Serial.print(", ");
   Serial.print(conductivity);
   Serial.println();
+#endif
 
   dataFile.print((float) millis()/1000 - offset);
   dataFile.print(", ");
@@ -262,7 +299,7 @@ void Acquisition(float offset, File dataFile) {
   dataFile.print(conductivity);
   dataFile.println();
   
-   delay(display_delay*1000);              // wait for display refresh
+  delay(display_delay*1000);              // wait for display refresh
 }
 
 
@@ -341,6 +378,19 @@ String nameFile2(int a) {
 /////////////////////////////////////////////////////
 
 void firstRunSerial()  { 
+#ifdef LCD
+  lcd.setCursor(0, 0);   //
+  lcd.clear();
+  lcd.print(nameProg);
+  lcd.setCursor(0, 1);
+  lcd.print("v. ");
+  lcd.println(versProg);
+  delay(1000);
+  lcd.clear();
+  lcd.setCursor(0, 1);
+  lcd.print("initializing...");
+#else
+  
   Serial.println();
   Serial.println();
   Serial.println("----------------------------------------------------------------------");
@@ -371,14 +421,14 @@ void firstRunSerial()  {
   
   Serial.print("Refresh every (sec): ");
   Serial.println(display_delay);
-  Serial.print("Temperature 1 (C): ");
+  Serial.print("Temperature Lower Cold Plate (C): ");
   Serial.println(Tread(therm1));
-  Serial.print("Temperature 2 (C): ");
+  Serial.print("Temperature Lower Hot Plate (C): ");
   Serial.println(Tread(therm2));
-  Serial.print("Ambient Temperature (C): ");
-  Serial.println(TmediumInitial); 
+  Serial.print("Temperature Upper Cold Plate (C): ");
+  Serial.println(Tread(therm3)); 
   Serial.println();
-  
+  #endif
 }
 
 
@@ -392,6 +442,5 @@ void summarySD(float offset)  {
   dataFile2.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
   Acquisition(offset, dataFile2);
   dataFile2.close();
-  
 }
 
