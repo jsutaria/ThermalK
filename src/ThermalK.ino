@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.5 - 20150728
+    Version 0.5.1 - 20150728
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.5 - 20150728";
+String versProg = "0.5.1 - 20150728";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
 
@@ -188,7 +188,7 @@ void setup() {
   TmediumInitial = Tread(therm3);
 #ifdef LCD
 #else   
-  Serial.println("(1) Start Acquisition; (2) Stop acquisition; (3) Reset ");
+  Serial.println("(1) Start Acquisition; (2) Stop acquisition; (3) Reset; (4) Info ");
   Serial.println();
 #endif
 }
@@ -234,15 +234,20 @@ void loop() {
            {
               break;
            }
-        }
+        }        
         dataFile.println();
         dataFile.close();
         summarySD(offset);
+
 #ifdef LCD
 #else   
       Serial.println();
 #endif
       }
+  if(inSerial==52)  
+      {
+        firstRunSerial();
+      }    
   }
 }
 
