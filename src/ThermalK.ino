@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.5.1 - 20150728
+    Version 0.6 - 20150730
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.5.1 - 20150728";
+String versProg = "0.6 - 20150730";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
 
@@ -69,9 +69,10 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
   // L = thickness of sample
   // A = surface area/contact area of sample
   // deltaT = change in Temp from hot to cold side of sample
-float Q = 10.11;
-float L = 0.00635;
-float A = 0.00316692;
+float Q = 6.2675;
+float L_1 = 0.005;
+float L_2 = 0.01;
+float A = 0.0019635;
 
 //--------------------------------------------------------------------------------
 // Change this to match your SD shield or module;
@@ -268,11 +269,10 @@ void Acquisition(float offset, File dataFile) {
   // L = thickness of sample
   // A = surface area/contact area of sample
   // deltaT = change in Temp from hot to cold side of sample
-  float Q = 10.11;
-  float L = 0.00635;
-  float A = 0.00316692;
-  float deltaT = T3 - T1;
-  float conductivity = (Q*L)/(A*deltaT);
+  
+  float deltaT_1 = T3 - T1;
+  float deltaT_2 = T3 - T2;
+  float conductivity = (Q)/(A*((deltaT_1/L_1) + (deltaT_2/L_2)));
 
 #ifdef LCD
   lcd.clear();

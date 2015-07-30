@@ -1,3 +1,3 @@
 # ThermalK
-version 0.5.1 - 20150728
+version 0.6 - 20150730
 Thermal conductivity monitor
