@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.7 - 20150730
+    Version 0.7.1 - 20150730
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.7 - 20150730";
+String versProg = "0.7.1 - 20150730";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
@@ -168,31 +168,35 @@ void setup() {
 #endif
   }
   else
-  {
-
-    //----------------------------------------  
-    // Reads or writes the preference file.
-    //----------------------------------------  
-
+  { 
+#ifdef LCD
+#else   
+    Serial.println("OK");
+#endif
+  }
+    
     // to use today's date as the filename:
     //nameFile2(0).toCharArray(nameFileData, 13);
-
     nameFile2(1).toCharArray(nameFileData, 13);
     nameFile2(2).toCharArray(nameFileSummary, 13);
 
 #ifdef LCD
-#else   
-    Serial.println("OK");
+#else  
+   Serial.print("Saving data: ");
+   Serial.println(nameFileData);
+   Serial.print("Saving summary: ");
+   Serial.println(nameFileSummary);
+   Serial.println();
+#endif  
+  
+
     Pref();
     delay (100);
-    Serial.print("Saving data: ");
-    Serial.println(nameFileData);
-    Serial.print("Saving summary: ");
-    Serial.println(nameFileSummary);
-    Serial.println();
-#endif  
-  }
-    
+    //----------------------------------------  
+    // Reads or writes the preference file.
+    //----------------------------------------  
+
+  
   TmediumInitial = Tread(therm3);
 #ifdef LCD
 #else   
@@ -506,7 +510,16 @@ void writeDateTime(File dataFile) {
 void Pref(){
   File myFile = SD.open(cfgFile, FILE_READ);
   if (myFile) {
+
+#ifdef LCD
+  lcd.setCursor(0, 0);   //
+  lcd.clear();
+  lcd.print("Configuration file");
+  lcd.setCursor(0, 1);   //
+  lcd.print("found");
+#else
     Serial.println("Configuration file found.");
+#endif
 
     Q = valuef(myFile);
     L_1 = valuef(myFile);
@@ -518,10 +531,18 @@ void Pref(){
   {
     File myFile = SD.open(cfgFile, FILE_WRITE);
 
+#ifdef LCD
+    lcd.setCursor(0, 0);   //
+    lcd.clear();
+    lcd.print("Creating");
+    lcd.setCursor(0, 1);   //
+    lcd.print("Conf. File");
+#else
     Serial.println("Missing configuration file on SD card");
     Serial.print("Creating configuration file: \"");
     Serial.print(cfgFile);
     Serial.println("\"");
+#endif
 
     myFile.println(Q,6);
     myFile.println(L_1,6);    // number of cells
