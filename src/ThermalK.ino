@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.6.5 - 20150730
+    Version 0.7 - 20150730
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.6.5 - 20150730";
+String versProg = "0.7 - 20150730";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
@@ -85,7 +85,7 @@ float A = 0.0019635;
 // Sparkfun SD shield: pin 8
 //---------------------------------------------------------------------------------
 #define SDshield 10
-char cfgFile[]="ThermalK.cfg";
+char cfgFile[]="TK.cfg";
 const int chipSelect = SDshield;
 char nameFile[13];
 char nameFileData[13];
@@ -170,6 +170,10 @@ void setup() {
   else
   {
 
+    //----------------------------------------  
+    // Reads or writes the preference file.
+    //----------------------------------------  
+
     // to use today's date as the filename:
     //nameFile2(0).toCharArray(nameFileData, 13);
 
@@ -179,6 +183,8 @@ void setup() {
 #ifdef LCD
 #else   
     Serial.println("OK");
+    Pref();
+    delay (100);
     Serial.print("Saving data: ");
     Serial.println(nameFileData);
     Serial.print("Saving summary: ");
@@ -479,6 +485,94 @@ void writeDateTime(File dataFile) {
   dataFile.print("-");
   dataFile.print(now.year(), DEC);
   dataFile.println("\"");
-  
+  dataFile.println("\"Q\",\"L_1\",\"L_2\",\"A\"");
+  dataFile.print(Q,6);
+  dataFile.print(",");
+  dataFile.print(L_1,6);
+  dataFile.print(",");
+  dataFile.print(L_2,6);
+  dataFile.print(",");
+  dataFile.print(A,6);
+  dataFile.println(",");
 }
+
+
+
+///////////////////////////////////////////
+// Preferences (read from file)
+///////////////////////////////////////////
+
+
+void Pref(){
+  File myFile = SD.open(cfgFile, FILE_READ);
+  if (myFile) {
+    Serial.println("Configuration file found.");
+
+    Q = valuef(myFile);
+    L_1 = valuef(myFile);
+    L_2 = valuef(myFile);
+    A = valuef(myFile);
+    myFile.close();
+  }
+  else 
+  {
+    File myFile = SD.open(cfgFile, FILE_WRITE);
+
+    Serial.println("Missing configuration file on SD card");
+    Serial.print("Creating configuration file: \"");
+    Serial.print(cfgFile);
+    Serial.println("\"");
+
+    myFile.println(Q,6);
+    myFile.println(L_1,6);    // number of cells
+    myFile.println(L_2,6);  // Offset in current measurement   
+    myFile.println(A,6);      // Max Voltage measured (stopV)
+
+    myFile.close();
+
+  }
+}
+
+///////////////////////////////////////////////////////
+// Reads full integers or floats from a line in a file 
+//////////////////////////////////////////////////////
+
+int value(File myFile) {
+  int t=0;
+  int g=0;
+  while (myFile.available()) {
+    g = myFile.read();
+    if(g==13)
+      break;
+    if(g!=10)
+      t=t*10+(g - '0');
+  }
+  return t;
+}
+
+float valuef(File myFile) {
+  float t=0.0;
+  int g=0;
+  int l=0;
+  int q=0;
+  int k=0;
+  while (myFile.available()) {
+    g = myFile.read();
+    k++;
+    if(g==13)
+      break;
+    if(g==45)  
+      {q=1;}
+    if(g==46)
+      {l=k;}
+    if(g!=10 && g!=45 && g!=46)
+      {t=t*10.0+(g - '0');}
+      }
+  if(q==1)
+     t=-t;
+  if(l>0)
+     t=t/pow(10,k-l-1);    
+  return t;
+}
+
 
