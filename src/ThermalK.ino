@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.6.1 - 20150730
+    Version 0.6.2 - 20150730
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.6 - 20150730";
+String versProg = "0.6.2 - 20150730";
 //String nameProg = "ThermalK: Thermal Conductivity Monitor";
 //String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
 
@@ -183,10 +183,10 @@ void setup() {
 
 #ifdef LCD
 #else   
-    Serial.println("Card initialized.");
-    Serial.print("Saving data into: ");
+    Serial.println("OK");
+    Serial.print("Saving data: ");
     Serial.println(nameFileData);
-    Serial.print("Saving summary into: ");
+    Serial.print("Saving summary: ");
     Serial.println(nameFileSummary);
     Serial.println();
 #endif  
@@ -195,7 +195,7 @@ void setup() {
   TmediumInitial = Tread(therm3);
 #ifdef LCD
 #else   
-  Serial.println("(1) Start Acquisition; (2) Stop acquisition; (3) Reset; (4) Info ");
+  Serial.println("(1) Start; (2) Stop; (3) Reset; (4) Info ");
   Serial.println();
 #endif
 }
@@ -405,10 +405,10 @@ void firstRunSerial()  {
   Serial.println();
   Serial.println();
   //Serial.println("----------------------------------------------------------------------");
-  //Serial.print(nameProg);
-  //Serial.print(" - v. ");
-  //Serial.println(versProg);
-  //Serial.println(developer);
+  Serial.print(nameProg);
+  Serial.print(" - v. ");
+  Serial.println(versProg);
+  Serial.println(developer);
   //Serial.println("----------------------------------------------------------------------");
   Serial.println();
    DateTime now = rtc.now();
