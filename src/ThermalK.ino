@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.6.2 - 20150730
+    Version 0.6.5 - 20150730
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -48,12 +48,10 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.6.2 - 20150730";
-//String nameProg = "ThermalK: Thermal Conductivity Monitor";
-//String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
-
-String nameProg = "TK";
-String developer = "";
+String versProg = "0.6.5 - 20150730";
+String nameProg = "ThermalK: Thermal Conductivity Monitor";
+String nameProgShort = "ThermalK";
+String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
 
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
 float TmediumInitial = 0.0;
@@ -89,9 +87,9 @@ float A = 0.0019635;
 #define SDshield 10
 char cfgFile[]="ThermalK.cfg";
 const int chipSelect = SDshield;
-char nameFile[6];
-char nameFileData[6];
-char nameFileSummary[6]; 
+char nameFile[13];
+char nameFileData[13];
+char nameFileSummary[13]; 
 
 //-------------------------------------------------------------------------------v 
 // Define pins and parameters for the thermistors
@@ -173,10 +171,7 @@ void setup() {
   {
 
     // to use today's date as the filename:
-    //nameFile2(0).toCharArray(nameFile, 13);
-    //Serial.println();
-    //Serial.print("Saving full IV data into: ");
-    //Serial.println(nameFile);
+    //nameFile2(0).toCharArray(nameFileData, 13);
 
     nameFile2(1).toCharArray(nameFileData, 13);
     nameFile2(2).toCharArray(nameFileSummary, 13);
@@ -217,6 +212,7 @@ void loop() {
 #endif
 
       File dataFile = SD.open(nameFileData, FILE_WRITE);
+      writeDateTime(dataFile);
       dataFile.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
       dataFile.close();
 
@@ -231,7 +227,6 @@ void loop() {
       { float offset = (float) millis()/1000;
       
       File dataFile = SD.open(nameFileData, FILE_WRITE);
-  
       while(inSerial!=50)
         {
         inSerial = Serial.read(); 
@@ -402,14 +397,11 @@ void firstRunSerial()  {
   lcd.print("initializing...");
 #else
   
-  Serial.println();
-  Serial.println();
-  //Serial.println("----------------------------------------------------------------------");
+  Serial.println();  
   Serial.print(nameProg);
   Serial.print(" - v. ");
   Serial.println(versProg);
   Serial.println(developer);
-  //Serial.println("----------------------------------------------------------------------");
   Serial.println();
    DateTime now = rtc.now();
     Serial.print("Time: ");
@@ -451,8 +443,42 @@ void firstRunSerial()  {
 void summarySD(float offset)  {
 
   File dataFile2 = SD.open(nameFileSummary, FILE_WRITE); 
+  writeDateTime(dataFile2);
   dataFile2.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
   Acquisition(offset, dataFile2);
+  dataFile2.println();
   dataFile2.close();
+
+}
+
+/////////////////////////////////////////////////////
+// write date and time stamp on SD
+/////////////////////////////////////////////////////
+
+void writeDateTime(File dataFile) {
+    DateTime now = rtc.now();
+  dataFile.print("\"");
+  //dataFile.print(nameProgShort);
+  dataFile.print("v. ");
+  dataFile.print(versProg);
+  dataFile.print("\",");
+  dataFile.print("\"Time: \",\"");
+  dataFile.print(now.hour(),DEC);
+  dataFile.print(":");
+  if(now.minute() < 10)
+    dataFile.print('0');
+  dataFile.print(now.minute(), DEC);
+  dataFile.print(":");
+  if(now.second() < 10)
+    dataFile.print('0');
+  dataFile.print(now.second(), DEC);
+  dataFile.print("\",\"Date: \",\"");
+  dataFile.print(now.month(), DEC );
+  dataFile.print("-");
+  dataFile.print(now.day(),DEC );
+  dataFile.print("-");
+  dataFile.print(now.year(), DEC);
+  dataFile.println("\"");
+  
 }
 
