@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.6 - 20150730
+    Version 0.6.1 - 20150730
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -49,8 +49,11 @@
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
 String versProg = "0.6 - 20150730";
-String nameProg = "ThermalK: Thermal Conductivity Monitor";
-String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
+//String nameProg = "ThermalK: Thermal Conductivity Monitor";
+//String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
+
+String nameProg = "TK";
+String developer = "";
 
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
 float TmediumInitial = 0.0;
@@ -58,8 +61,11 @@ float TmediumInitial = 0.0;
 //-------------------------------------------------------------------------------
 //  LCD display 
 //-------------------------------------------------------------------------------
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 //#define LCD       //if commented, runs on regular serial
+
+#ifdef LCD
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+#endif
 
 //-------------------------------------------------------------------------------
 // Thermal conductivity parameters
@@ -83,9 +89,9 @@ float A = 0.0019635;
 #define SDshield 10
 char cfgFile[]="ThermalK.cfg";
 const int chipSelect = SDshield;
-char nameFile[13];
-char nameFileData[13];
-char nameFileSummary[13]; 
+char nameFile[6];
+char nameFileData[6];
+char nameFileSummary[6]; 
 
 //-------------------------------------------------------------------------------v 
 // Define pins and parameters for the thermistors
@@ -215,10 +221,10 @@ void loop() {
       dataFile.close();
 
 #ifdef LCD
-#else
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Start");
+#else
 #endif
     
     if(inSerial==49)
@@ -398,15 +404,15 @@ void firstRunSerial()  {
   
   Serial.println();
   Serial.println();
-  Serial.println("----------------------------------------------------------------------");
-  Serial.print(nameProg);
-  Serial.print(" - v. ");
-  Serial.println(versProg);
-  Serial.println(developer);
-  Serial.println("----------------------------------------------------------------------");
+  //Serial.println("----------------------------------------------------------------------");
+  //Serial.print(nameProg);
+  //Serial.print(" - v. ");
+  //Serial.println(versProg);
+  //Serial.println(developer);
+  //Serial.println("----------------------------------------------------------------------");
   Serial.println();
    DateTime now = rtc.now();
-    Serial.print("Right now it's: ");
+    Serial.print("Time: ");
   Serial.print(now.hour(),DEC);
   Serial.print(":");
   if(now.minute() < 10)
@@ -424,15 +430,16 @@ void firstRunSerial()  {
   Serial.print(now.year(), DEC);
   Serial.println(")");
   
-  Serial.print("Refresh every (sec): ");
+  Serial.print("Refresh (s): ");
   Serial.println(display_delay);
-  Serial.print("Temperature Lower Cold Plate (C): ");
+  Serial.print("T Lower CP (C): ");
   Serial.println(Tread(therm1));
-  Serial.print("Temperature Lower Hot Plate (C): ");
+  Serial.print("T Lower HP (C): ");
   Serial.println(Tread(therm2));
-  Serial.print("Temperature Upper Cold Plate (C): ");
+  Serial.print("T Upper CP (C): ");
   Serial.println(Tread(therm3)); 
   Serial.println();
+  
   #endif
 }
 
