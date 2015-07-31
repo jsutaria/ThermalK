@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.7.1 - 20150730
+    Version 0.7.2 - 20150731
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -20,9 +20,29 @@
  You can find a complete copy of the GNU General Public License at:
  
  http://www.gnu.org/licenses/gpl.txt 
-*/
+
 //////////////////////////////////////////////////////////////////////////
 
+SD Card:
+ If using the the Adafruit Logging shield with an Arduino Mega (Only the MEGA),
+ in the file: ~arduino/libraries/SD/utility/Sd2Card.h
+ 
+ a. change the line: 
+    #define MEGA_SOFT_SPI 0
+    to 
+    #define MEGA_SOFT_SPI 1
+
+ b. and comment:
+
+    #define USE_SPI_LIB
+    in ~arduino/libraries/SD/utility/Sd2Card.h
+    and ~arduino/libraries/SD/utility/Sd2Card.c
+ 
+ Do not change the other pins!
+ Also make sure the definition below (SDshield) is correctly set for the type of SD shield used.
+
+//////////////////////////////////////////////////////////////////////////
+*/
 
 //-------------------------------------------------------------------------------
 // TO BE USED ONLY FOR CALIBRATION OF REAL TIME CLOCK. 
@@ -48,7 +68,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.7.1 - 20150730";
+String versProg = "0.7.2 - 20150731";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
