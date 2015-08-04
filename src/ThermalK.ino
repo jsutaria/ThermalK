@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.7.2 - 20150731
+    Version 0.8 - 20150804
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -21,9 +21,8 @@
  
  http://www.gnu.org/licenses/gpl.txt 
 
-//////////////////////////////////////////////////////////////////////////
-
-SD Card:
+// SD Card --------------------------------------------------------------------
+/*
  If using the the Adafruit Logging shield with an Arduino Mega (Only the MEGA),
  in the file: ~arduino/libraries/SD/utility/Sd2Card.h
  
@@ -40,22 +39,33 @@ SD Card:
  
  Do not change the other pins!
  Also make sure the definition below (SDshield) is correctly set for the type of SD shield used.
-
-//////////////////////////////////////////////////////////////////////////
 */
-
 //-------------------------------------------------------------------------------
-// TO BE USED ONLY FOR CALIBRATION OF REAL TIME CLOCK. 
-//  The next #define TIMECAL line should remain commented for normal operations
-//  Uncomment ONLY for calibration of real time clock. 
 
-//  Instructions:
-//    0. Make sure the Real Time Clock hardware setup is in place. 
-//    1. Compile this program with the "#define TIMECAL" line uncommented.
-//    2. Upload but DO NOT open the Serial monitor.
-//    3. Uncomment the line "#define TIMECAL".
-//    4. Comment and upload.
-//    5. Verify the correct date from the Serial monitor.
+// LCD Screen --------------------------------------------------------------------
+/*
+  The software supports LCD screens through the LiquidCrystal library:
+   https://www.arduino.cc/en/Tutorial/LiquidCrystal
+
+  Please refer to this page for wiring configuration.
+   
+*/
+//-------------------------------------------------------------------------------
+
+// Real Time Clock ---------------------------------------------------------------
+/*
+ TO BE USED ONLY FOR CALIBRATION OF REAL TIME CLOCK. 
+  The next #define TIMECAL line should remain commented for normal operations
+  Uncomment ONLY for calibration of real time clock. 
+
+  Instructions:
+    0. Make sure the Real Time Clock hardware setup is in place. 
+    1. Compile this program with the "#define TIMECAL" line uncommented.
+    2. Upload but DO NOT open the Serial monitor.
+    3. Uncomment the line "#define TIMECAL".
+    4. Comment and upload.
+    5. Verify the correct date from the Serial monitor.
+*/
 //-------------------------------------------------------------------------------
 //#define TIMECAL  //Uncomment for calibration of real time clock. Otherwise leave commented.
 
@@ -65,10 +75,13 @@ SD Card:
 #include "RTClib.h"
 #include <LiquidCrystal.h>
 
+#define LCD   //Uncomment to enable LCD support
+#define SER   //Uncomment to SERIAL outputsupport
+
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.7.2 - 20150731";
+String versProg = "0.8 - 20150804";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
@@ -79,10 +92,9 @@ float TmediumInitial = 0.0;
 //-------------------------------------------------------------------------------
 //  LCD display 
 //-------------------------------------------------------------------------------
-//#define LCD       //if commented, runs on regular serial
 
 #ifdef LCD
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal lcd(12, 11, 28, 26, 24, 22);
 #endif
 
 //-------------------------------------------------------------------------------
@@ -142,8 +154,7 @@ DateTime now;   // New RTC library
 //-------------------------------------------------------------------------------
 void setup() { 
 
-#ifdef LCD
-#else
+#ifdef SER
   Serial.begin(9600); 
 #endif  
 
@@ -174,14 +185,12 @@ void setup() {
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(53, OUTPUT);    //Arduino boards
-#ifdef LCD
-#else
+#ifdef SER
   Serial.print("Initializing SD card... ");
 #endif
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
-#ifdef LCD
-#else    
+#ifdef SER   
     Serial.println("Card failed, or not present.");
     Serial.println("SD card support disabled.");
     Serial.println();
@@ -189,8 +198,7 @@ void setup() {
   }
   else
   { 
-#ifdef LCD
-#else   
+#ifdef SER 
     Serial.println("OK");
 #endif
   }
@@ -200,8 +208,7 @@ void setup() {
     nameFile2(1).toCharArray(nameFileData, 13);
     nameFile2(2).toCharArray(nameFileSummary, 13);
 
-#ifdef LCD
-#else  
+#ifdef SER
    Serial.print("Saving data: ");
    Serial.println(nameFileData);
    Serial.print("Saving summary: ");
@@ -218,8 +225,7 @@ void setup() {
 
   
   TmediumInitial = Tread(therm3);
-#ifdef LCD
-#else   
+#ifdef SER 
   Serial.println("(1) Start; (2) Stop; (3) Reset; (4) Info ");
   Serial.println();
 #endif
@@ -236,8 +242,7 @@ void loop() {
   
   if (Serial.available() > 0) { 
     inSerial = Serial.read();
-#ifdef LCD
-#else
+#ifdef SER
     Serial.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
 #endif
 
@@ -250,7 +255,6 @@ void loop() {
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Start");
-#else
 #endif
     
     if(inSerial==49)
@@ -271,8 +275,7 @@ void loop() {
         dataFile.close();
         summarySD(offset);
 
-#ifdef LCD
-#else   
+#ifdef SER
       Serial.println();
 #endif
       }
@@ -310,8 +313,9 @@ void Acquisition(float offset, File dataFile) {
   lcd.setCursor(0, 0);
   lcd.print("TK = ");
   lcd.print(conductivity);
+#endif
 
-#else
+#ifdef SER
   Serial.print((float) millis()/1000 - offset);
   Serial.print(", ");
   Serial.print(T1);
@@ -425,8 +429,9 @@ void firstRunSerial()  {
   lcd.clear();
   lcd.setCursor(0, 1);
   lcd.print("initializing...");
-#else
-  
+#endif
+
+#ifdef SER  
   Serial.println();  
   Serial.print(nameProg);
   Serial.print(" - v. ");
@@ -461,8 +466,7 @@ void firstRunSerial()  {
   Serial.print("T Upper CP (C): ");
   Serial.println(Tread(therm3)); 
   Serial.println();
-  
-  #endif
+#endif
 }
 
 
@@ -537,8 +541,10 @@ void Pref(){
   lcd.print("Configuration file");
   lcd.setCursor(0, 1);   //
   lcd.print("found");
-#else
-    Serial.println("Configuration file found.");
+#endif
+
+#ifdef SER
+  Serial.println("Configuration file found.");
 #endif
 
     Q = valuef(myFile);
@@ -557,7 +563,9 @@ void Pref(){
     lcd.print("Creating");
     lcd.setCursor(0, 1);   //
     lcd.print("Conf. File");
-#else
+#endif
+
+#ifdef SER
     Serial.println("Missing configuration file on SD card");
     Serial.print("Creating configuration file: \"");
     Serial.print(cfgFile);
