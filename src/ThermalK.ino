@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.8 - 20150804
+    Version 0.9 - 20151010
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -69,6 +69,12 @@
 //-------------------------------------------------------------------------------
 //#define TIMECAL  //Uncomment for calibration of real time clock. Otherwise leave commented.
 
+//--------------------------------------------------------------------------------
+// Uncomment the line corresponding to the Arduino DUE board (ARM32)
+// DEFAULT (all commented) is for Arduino AVR boards.
+//--------------------------------------------------------------------------------
+//#define ArDUE // Arduino DUE
+
 #include <SD.h> 
 #include <Wire.h>
 #include <SPI.h>
@@ -81,7 +87,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.8 - 20150804";
+String versProg = "0.9 - 20151010";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
@@ -157,6 +163,10 @@ void setup() {
 #ifdef SER
   Serial.begin(9600); 
 #endif  
+
+#ifdef ArDUE    //Increase analog input resolution to 12 bit in Arduino DUE.
+  analogReadResolution(12);
+#endif
 
 #ifdef LCD
   lcd.begin(16, 2);
