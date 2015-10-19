@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.9 - 20151010
+    Version 0.10 - 20151019
   
     Copyight (C) 2015 Sam Belden, Nicola Ferralis
     sbelden@mit.edu, ferralis@mit.edu
@@ -87,13 +87,22 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.9 - 20151010";
+String versProg = "0.10 - 20151019";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
 
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
 float TmediumInitial = 0.0;
+int TBits = 1023; //resolution of reading analog input (10 bits for AVR, 12 for ARM)
+
+//--------------------------------------------------------------------------------
+// Change this to match your SD shield or module;
+// Arduino Ethernet shield: pin 4
+// Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1)
+// Sparkfun SD shield: pin 8
+//---------------------------------------------------------------------------------
+#define SDshield 10
 
 //-------------------------------------------------------------------------------
 //  LCD display 
@@ -116,13 +125,7 @@ float L_1 = 0.005;
 float L_2 = 0.01;
 float A = 0.0019635;
 
-//--------------------------------------------------------------------------------
-// Change this to match your SD shield or module;
-// Arduino Ethernet shield: pin 4
-// Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1)
-// Sparkfun SD shield: pin 8
-//---------------------------------------------------------------------------------
-#define SDshield 10
+
 char cfgFile[]="TK.cfg";
 const int chipSelect = SDshield;
 char nameFile[13];
@@ -161,11 +164,14 @@ DateTime now;   // New RTC library
 void setup() { 
 
 #ifdef SER
-  Serial.begin(9600); 
+  Serial.begin(57600); 
 #endif  
 
 #ifdef ArDUE    //Increase analog input resolution to 12 bit in Arduino DUE.
   analogReadResolution(12);
+  TBits = 4095;
+#else
+  TBits = 1023;  
 #endif
 
 #ifdef LCD
@@ -174,12 +180,11 @@ void setup() {
   //----------------------------------------
   // get the time from the RTC
   //----------------------------------------
-  //Wire1.begin(); //For Arduino DUE
-  Wire.begin();  //For Arduino AVR  
+  Wire.begin();  
   rtc.begin();
   
   if (! rtc.isrunning()) {
-    //Serial.println("RTC is NOT running!");
+    Serial.println("RTC is NOT running!");
   }
 
 #ifdef TIMECAL
@@ -357,7 +362,7 @@ void Acquisition(float offset, File dataFile) {
 // Read temperature from thermistor  
 //-------------------------------------------------------------------------------
 
-float Tread(int THERMISTORPIN) { 
+float Tread(int THERMISTORPIN) {
   int samples[NUMSAMPLES];
    // take N samples in a row, with a slight delay
   for (int i=0; i< NUMSAMPLES; i++) {
@@ -373,7 +378,7 @@ float Tread(int THERMISTORPIN) {
   average /= NUMSAMPLES;
 
   // convert the value to resistance
-  average = 1023 / average - 1;
+  average = TBits / average - 1;
   average = SERIESRESISTOR / average;
 
   float steinhart;
@@ -466,7 +471,15 @@ void firstRunSerial()  {
   Serial.print("-");
   Serial.print(now.year(), DEC);
   Serial.println(")");
-  
+
+  Serial.print("Resolution analog input: ");
+#ifdef ArDUE
+  Serial.println("12-bit - Arduino DUE only");
+#else
+  Serial.println("10-bit");
+#endif
+
+  Serial.println();
   Serial.print("Refresh (s): ");
   Serial.println(display_delay);
   Serial.print("T Lower CP (C): ");
