@@ -2,10 +2,10 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.10 - 20151019
+    Version 0.12 - 20160517
   
-    Copyight (C) 2015 Sam Belden, Nicola Ferralis
-    sbelden@mit.edu, ferralis@mit.edu
+    Copyight (C) 2015-2016  Nicola Ferralis
+    ferralis@mit.edu
  
  This program (source code and binaries) is free software; 
  you can redistribute it and/or modify it under the terms of the
@@ -23,8 +23,12 @@
 
 // SD Card --------------------------------------------------------------------
 /*
+ - Arduino Ethernet shield: pin 4
+ - Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1) 
+ - Sparkfun SD shield: pin 8
+ 
  If using the the Adafruit Logging shield with an Arduino Mega (Only the MEGA),
- in the file: ~arduino/libraries/SD/utility/Sd2Card.h
+ in the file: ~arduino/libraries/SD/src/utility/Sd2Card.h
  
  a. change the line: 
     #define MEGA_SOFT_SPI 0
@@ -81,17 +85,18 @@
 #include "RTClib.h"
 #include <LiquidCrystal.h>
 
-#define LCD   //Uncomment to enable LCD support
+//#define LCD   //Uncomment to enable LCD support
 #define SER   //Uncomment to SERIAL outputsupport
 
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.10 - 20151019";
+String versProg = "0.11 - 20160517";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
-String developer = "Copyright (C) 2015 Sam Belden, Nicola Ferralis";
+String developer = "Copyright (C) 2015-2016 Nicola Ferralis";
 
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
 float TmediumInitial = 0.0;
 int TBits = 1023; //resolution of reading analog input (10 bits for AVR, 12 for ARM)
@@ -165,8 +170,9 @@ void setup() {
 
 #ifdef SER
   Serial.begin(57600); 
+  progInfo();
 #endif  
-
+  
 #ifdef ArDUE    //Increase analog input resolution to 12 bit in Arduino DUE.
   analogReadResolution(12);
   TBits = 4095;
@@ -192,8 +198,6 @@ void setup() {
     Serial.println("RTC is syncing!");
 #endif
 
-  firstRunSerial();
-
   //----------------------------------------  
   // Initialization SD card
   //----------------------------------------    
@@ -218,10 +222,16 @@ void setup() {
 #endif
   }
     
-    // to use today's date as the filename:
-    //nameFile2(0).toCharArray(nameFileData, 13);
-    nameFile2(1).toCharArray(nameFileData, 13);
-    nameFile2(2).toCharArray(nameFileSummary, 13);
+   // to use today's date as the filename:
+   //nameFile2(0).toCharArray(nameFileData, 13);
+   nameFile2(1).toCharArray(nameFileData, 13);
+   nameFile2(2).toCharArray(nameFileSummary, 13);
+
+//----------------------------------------  
+// Reads or writes the preference file.
+//----------------------------------------  
+   Pref();
+   delay (100);
 
 #ifdef SER
    Serial.print("Saving data: ");
@@ -231,19 +241,9 @@ void setup() {
    Serial.println();
 #endif  
   
-
-    Pref();
-    delay (100);
-    //----------------------------------------  
-    // Reads or writes the preference file.
-    //----------------------------------------  
-
-  
   TmediumInitial = Tread(therm3);
-#ifdef SER 
-  Serial.println("(1) Start; (2) Stop; (3) Reset; (4) Info ");
-  Serial.println();
-#endif
+  firstRunSerial();
+  menuProg();
 }
 
 
@@ -252,14 +252,11 @@ void setup() {
 //-------------------------------------------------------------------------------
 
 void loop() {
-   
+
   int inSerial = 0;    // variable for serial input
   
   if (Serial.available() > 0) { 
     inSerial = Serial.read();
-#ifdef SER
-    Serial.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
-#endif
 
       File dataFile = SD.open(nameFileData, FILE_WRITE);
       writeDateTime(dataFile);
@@ -273,18 +270,17 @@ void loop() {
 #endif
     
     if(inSerial==49)
-      { float offset = (float) millis()/1000;
+      { 
+#ifdef SER
+      headerSerial();
+#endif
+        float offset = (float) millis()/1000;
       
       File dataFile = SD.open(nameFileData, FILE_WRITE);
       while(inSerial!=50)
         {
         inSerial = Serial.read(); 
-
         Acquisition(offset, dataFile);
-        if(inSerial==51) 
-           {
-              break;
-           }
         }        
         dataFile.println();
         dataFile.close();
@@ -293,22 +289,30 @@ void loop() {
 #ifdef SER
       Serial.println();
 #endif
+      menuProg();
       }
-  if(inSerial==52)  
-      {
+      
+  if(inSerial==51) {
+        progInfo();
         firstRunSerial();
-      }    
+        menuProg();
+      }
+
+  if(inSerial==52) {
+        Serial.println("Resetting device");
+        Serial.println();
+        delay(10);
+        resetFunc();
+      }            
   }
 }
-
-
 
 //-------------------------------------------------------------------------------
 // Acquisition Routine
 //-------------------------------------------------------------------------------
 
 void Acquisition(float offset, File dataFile) {
- 
+
   float T1 = Tread(therm1);
   float T2 = Tread(therm2);
   float T3 = Tread(therm3);
@@ -447,12 +451,7 @@ void firstRunSerial()  {
 #endif
 
 #ifdef SER  
-  Serial.println();  
-  Serial.print(nameProg);
-  Serial.print(" - v. ");
-  Serial.println(versProg);
-  Serial.println(developer);
-  Serial.println();
+  //progInfo();
    DateTime now = rtc.now();
     Serial.print("Time: ");
   Serial.print(now.hour(),DEC);
@@ -492,6 +491,30 @@ void firstRunSerial()  {
 #endif
 }
 
+
+void progInfo() {
+#ifdef SER
+  Serial.println("---------------------------------------------------------");
+  Serial.print(nameProg);
+  Serial.print(" - v. ");
+  Serial.println(versProg);
+  Serial.println(developer);
+  Serial.println("---------------------------------------------------------\n");
+#endif
+}
+
+void menuProg() {
+#ifdef SER 
+  Serial.println("---------------------------------------------------------");
+  Serial.println("(1) Start; (2) Stop; (3) Info; (4) Reset ");
+  Serial.println("---------------------------------------------------------\n");
+#endif
+}
+
+
+void headerSerial() {
+  Serial.println("\"Time\",\"T Lower Cold Plate\",\"T Lower Hot Plate\",\"T Upper Cold Plate\",\"Thermal Conductivity\"");
+}
 
 /////////////////////////////////////////////////////
 // write summary to SD  
@@ -547,8 +570,6 @@ void writeDateTime(File dataFile) {
   dataFile.println(",");
 }
 
-
-
 ///////////////////////////////////////////
 // Preferences (read from file)
 ///////////////////////////////////////////
@@ -578,6 +599,19 @@ void Pref(){
   }
   else 
   {
+    Serial.println("Missing configuration file on SD card");
+    Serial.print("Creating configuration file: \"");
+    Serial.print(cfgFile);
+    Serial.println("\"");
+    UpdatePref();
+  }
+}
+
+
+void UpdatePref(){
+    SD.remove(cfgFile);
+    delay(5);
+
     File myFile = SD.open(cfgFile, FILE_WRITE);
 
 #ifdef LCD
@@ -603,7 +637,7 @@ void Pref(){
     myFile.close();
 
   }
-}
+
 
 ///////////////////////////////////////////////////////
 // Reads full integers or floats from a line in a file 

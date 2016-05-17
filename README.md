@@ -1,16 +1,17 @@
 # ThermalK
-version 0.10 - 20151019
+version 0.12 - 20160517
 Thermal conductivity monitor
 
-Recommended: Arduino MEGA 2560 with Adafruit data logging shield.
-Tested on Arduino DUE (note: the Adafruit data logger won't work
-    with the DUE. Use the Arduino Ethernet shield instead).
+Recommended: Arduino MEGA 2560. Tested on Arduino DUE.
 
 For the LCD screen hardware, wiring configuration please refer to:
 https://www.arduino.cc/en/Tutorial/LiquidCrystal
 
-ThermalK supports Adafruit Data Logging Shield
-https://www.adafruit.com/products/1141
+ThermalK supports:
+
+- Adafruit Data Logging Shield
+- Arduino Ethernet shield 
+- Sparkfun SD shield
 
 Additional libraries: real time clock RTClib
 https://github.com/adafruit/RTClib
