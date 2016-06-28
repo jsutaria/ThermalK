@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.12.2 - 20160628
+    Version 0.12.3 - 20160628
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.12.1 - 20160525";
+String versProg = "0.12.3 - 20160528";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis";
@@ -716,15 +716,19 @@ float valuef(File myFile) {
 }
 
 void transRamp(int value, int pin) {
-  if(t == 0) {
+  if(value == 0) {
     analogWrite(pin, LOW);
     #ifdef SER
-      Serial.println("Transistor at pin " + pin + " set to LOW");
+      Serial.print("Transistor at pin ");
+      Serial.print(pin);
+      Serial.println(" set to LOW");
     #endif
   } else {
     analogWrite(pin, HIGH);
     #ifdef SER
-      Serial.println("Transistor at pin " + pin + " set to HIGH");
+      Serial.print("Transistor at pin ");
+      Serial.print(pin);
+      Serial.println(" set to HIGH");
     #endif
   }
 }
