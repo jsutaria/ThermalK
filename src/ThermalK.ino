@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.12.3 - 20160628
+    Version 0.13 - 20160628
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.12.3 - 20160528";
+String versProg = "0.13 - 20160528";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis";
@@ -122,9 +122,12 @@ LiquidCrystal lcd(12, 11, 28, 26, 24, 22);
 //-------------------------------------------------------------------------------
 // Define pins for the transistors
 //-------------------------------------------------------------------------------
+#ifdef TRS
 #define TR1 A3
 #define TR2 A4
 #define TR3 A5
+#endif
+
 
 //-------------------------------------------------------------------------------
 // Thermal conductivity parameters
@@ -139,7 +142,6 @@ float L_1 = 0.005;
 float L_2 = 0.01;
 float A = 0.0019635;
 
-
 char cfgFile[] = "TK.cfg";
 const int chipSelect = SDshield;
 char nameFile[13];
@@ -153,7 +155,6 @@ char nameFileSummary[13];
 #define therm2 A1
 #define therm3 A2
 
-
 // resistance at 25 degrees C
 #define THERMISTORNOMINAL 10000
 // temp. for nominal resistance (almost always 25 C)
@@ -166,6 +167,10 @@ char nameFileSummary[13];
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000
 
+// Sets target Temperature after cooldown. This is currently set as the same as 
+// TEMPERATURENOMINAL. Can be adjusted to needs.
+float TtargCool = TEMPERATURENOMINAL;  
+
 //-------------------------------------------------------------------------------
 //Real time chip
 //-------------------------------------------------------------------------------
@@ -176,8 +181,6 @@ DateTime now;   // New RTC library
 //-------------------------------------------------------------------------------
 //  SETUP routine
 //-------------------------------------------------------------------------------
-
-
 
 void setup() {
   #ifdef SER
@@ -193,13 +196,16 @@ void setup() {
   #endif
 
   #ifdef TRS
+    Serial.println("Support for transistors: enabled");
     pinMode(TR1, OUTPUT);
     pinMode(TR2, OUTPUT);
     pinMode(TR3, OUTPUT);
     transRamp(0, TR1);
     transRamp(0, TR2);
     transRamp(0, TR3);
-  #endif
+  #else
+    Serial.println("Support for transistors: disabled");
+  #endif  
   
   #ifdef LCD
     lcd.begin(16, 2);
@@ -325,6 +331,19 @@ void loop() {
       delay(10);
       resetFunc();
     }
+
+#ifdef TRS
+    if (inSerial == 53) {
+      Serial.println("Cool Down in progress. Press (2) to stop");
+      while(inSerial != 50) {
+        inSerial = Serial.read(); 
+        CoolDown(therm2, TtargCool);
+        }
+      firstRunSerial();
+      menuProg();
+    }
+#endif
+    
   }
 }
 
@@ -389,6 +408,37 @@ void Acquisition(float offset, File dataFile) {
   delay(display_delay * 1000);            // wait for display refresh
 }
 
+//-------------------------------------------------------------------------------
+// CoolDown: Run coolers to speed the cooling after acquisition
+//-------------------------------------------------------------------------------
+
+#ifdef TRS
+void CoolDown(int therm, float Ttarg) {
+  float Tmeas = Tread(therm);  
+ 
+#ifdef SER
+  Serial.print("Current Temperature: ");
+  Serial.print(Tmeas);
+  Serial.print("; Running CoolDown to: ");
+  Serial.println(Ttarg);
+#endif
+  if (Tmeas>Ttarg) {
+#ifdef SER
+  Serial.print("Current Temperature: ");
+  Serial.print(Tmeas);
+  Serial.print("; Target Temperature: ");
+  Serial.println(Ttarg);
+ 
+#endif
+    transRamp(1, TR1);
+    transRamp(1, TR3);
+    delay(display_delay * 1000);
+    Tmeas = Tread(therm);   
+  }
+    transRamp(0, TR1);
+    transRamp(0, TR3);
+}
+#endif
 
 //-------------------------------------------------------------------------------
 // Read temperature from thermistor
@@ -425,6 +475,19 @@ float Tread(int THERMISTORPIN) {
   return steinhart;
 }
 
+//-------------------------------------------------------------------------------
+// switch transistor 
+//-------------------------------------------------------------------------------
+
+#ifdef TRS
+void transRamp(int value, int pin) {
+  if(value == 0) {
+    analogWrite(pin, LOW);
+  } else {
+    analogWrite(pin, HIGH);
+  }
+}
+#endif
 
 ///////////////////////////////////////////
 // Set filename with the format:
@@ -534,7 +597,11 @@ void progInfo() {
 void menuProg() {
 #ifdef SER
   Serial.println("---------------------------------------------------------");
-  Serial.println("(1) Start; (2) Stop; (3) Info; (4) Reset ");
+  Serial.print("(1) Start; (2) Stop; (3) Info; (4) Reset");
+#ifdef TRS
+  Serial.print("; (5) Cool Down"); 
+#endif
+  Serial.println();   
   Serial.println("---------------------------------------------------------\n");
 #endif
 }
@@ -715,20 +782,3 @@ float valuef(File myFile) {
   return t;
 }
 
-void transRamp(int value, int pin) {
-  if(value == 0) {
-    analogWrite(pin, LOW);
-    #ifdef SER
-      Serial.print("Transistor at pin ");
-      Serial.print(pin);
-      Serial.println(" set to LOW");
-    #endif
-  } else {
-    analogWrite(pin, HIGH);
-    #ifdef SER
-      Serial.print("Transistor at pin ");
-      Serial.print(pin);
-      Serial.println(" set to HIGH");
-    #endif
-  }
-}
