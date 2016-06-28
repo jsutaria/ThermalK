@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.12.1 - 20160525
+    Version 0.12.2 - 20160628
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -87,6 +87,7 @@
 
 #define LCD   //Uncomment to enable LCD support
 #define SER   //Uncomment to SERIAL outputsupport
+#define TRS   //Uncomment to enable transistors
 
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
@@ -117,6 +118,14 @@ int TBits = 1023; //resolution of reading analog input (10 bits for AVR, 12 for 
 LiquidCrystal lcd(12, 11, 28, 26, 24, 22);
 #endif
 
+
+//-------------------------------------------------------------------------------
+// Define pins for the transistors
+//-------------------------------------------------------------------------------
+#define TR1 A3
+#define TR2 A4
+#define TR3 A5
+
 //-------------------------------------------------------------------------------
 // Thermal conductivity parameters
 //-------------------------------------------------------------------------------
@@ -137,12 +146,13 @@ char nameFile[13];
 char nameFileData[13];
 char nameFileSummary[13];
 
-//-------------------------------------------------------------------------------v
+//-------------------------------------------------------------------------------
 // Define pins and parameters for the thermistors
 //-------------------------------------------------------------------------------
 #define therm1 A0
 #define therm2 A1
 #define therm3 A2
+
 
 // resistance at 25 degrees C
 #define THERMISTORNOMINAL 10000
@@ -166,84 +176,95 @@ DateTime now;   // New RTC library
 //-------------------------------------------------------------------------------
 //  SETUP routine
 //-------------------------------------------------------------------------------
+
+
+
 void setup() {
+  #ifdef SER
+    Serial.begin(57600);
+    progInfo();
+  #endif
+  
+  #ifdef ArDUE    //Increase analog input resolution to 12 bit in Arduino DUE.
+    analogReadResolution(12);
+    TBits = 4095;
+  #else
+    TBits = 1023;
+  #endif
 
-#ifdef SER
-  Serial.begin(57600);
-  progInfo();
-#endif
-
-#ifdef ArDUE    //Increase analog input resolution to 12 bit in Arduino DUE.
-  analogReadResolution(12);
-  TBits = 4095;
-#else
-  TBits = 1023;
-#endif
-
-#ifdef LCD
-  lcd.begin(16, 2);
-#endif
-  //----------------------------------------
-  // get the time from the RTC
-  //----------------------------------------
-  Wire.begin();
-  rtc.begin();
-
-  if (! rtc.isrunning()) {
-    Serial.println("RTC is NOT running!");
-  }
-
-#ifdef TIMECAL
-  rtc.adjust(DateTime(__DATE__, __TIME__));
-  Serial.println("RTC is syncing!");
-#endif
-
-  //----------------------------------------
-  // Initialization SD card
-  //----------------------------------------
-  // make sure that the default chip select pin is set to
-  // output, even if you don't use it:
-  pinMode(53, OUTPUT);    //Arduino boards
-#ifdef SER
-  Serial.print("Initializing SD card... ");
-#endif
-  // see if the card is present and can be initialized:
-  if (!SD.begin(chipSelect)) {
-#ifdef SER
-    Serial.println("Card failed, or not present.");
-    Serial.println("SD card support disabled.");
+  #ifdef TRS
+    pinMode(TR1, OUTPUT);
+    pinMode(TR2, OUTPUT);
+    pinMode(TR3, OUTPUT);
+    transRamp(0, TR1);
+    transRamp(0, TR2);
+    transRamp(0, TR3);
+  #endif
+  
+  #ifdef LCD
+    lcd.begin(16, 2);
+  #endif
+    //----------------------------------------
+    // get the time from the RTC
+    //----------------------------------------
+    Wire.begin();
+    rtc.begin();
+  
+    if (! rtc.isrunning()) {
+      Serial.println("RTC is NOT running!");
+    }
+  
+  #ifdef TIMECAL
+    rtc.adjust(DateTime(__DATE__, __TIME__));
+    Serial.println("RTC is syncing!");
+  #endif
+  
+    //----------------------------------------
+    // Initialization SD card
+    //----------------------------------------
+    // make sure that the default chip select pin is set to
+    // output, even if you don't use it:
+    pinMode(53, OUTPUT);    //Arduino boards
+  #ifdef SER
+    Serial.print("Initializing SD card... ");
+  #endif
+    // see if the card is present and can be initialized:
+    if (!SD.begin(chipSelect)) {
+  #ifdef SER
+      Serial.println("Card failed, or not present.");
+      Serial.println("SD card support disabled.");
+      Serial.println();
+  #endif
+    }
+    else
+    {
+  #ifdef SER
+      Serial.println("OK");
+  #endif
+    }
+  
+    // to use today's date as the filename:
+    //nameFile2(0).toCharArray(nameFileData, 13);
+    nameFile2(1).toCharArray(nameFileData, 13);
+    nameFile2(2).toCharArray(nameFileSummary, 13);
+  
+    //----------------------------------------
+    // Reads or writes the preference file.
+    //----------------------------------------
+    Pref();
+    delay (100);
+  
+  #ifdef SER
+    Serial.print("Saving data: ");
+    Serial.println(nameFileData);
+    Serial.print("Saving summary: ");
+    Serial.println(nameFileSummary);
     Serial.println();
-#endif
-  }
-  else
-  {
-#ifdef SER
-    Serial.println("OK");
-#endif
-  }
-
-  // to use today's date as the filename:
-  //nameFile2(0).toCharArray(nameFileData, 13);
-  nameFile2(1).toCharArray(nameFileData, 13);
-  nameFile2(2).toCharArray(nameFileSummary, 13);
-
-  //----------------------------------------
-  // Reads or writes the preference file.
-  //----------------------------------------
-  Pref();
-  delay (100);
-
-#ifdef SER
-  Serial.print("Saving data: ");
-  Serial.println(nameFileData);
-  Serial.print("Saving summary: ");
-  Serial.println(nameFileSummary);
-  Serial.println();
-#endif
-
-  TmediumInitial = Tread(therm3);
-  firstRunSerial();
-  menuProg();
+  #endif
+  
+    TmediumInitial = Tread(therm3);
+    firstRunSerial();
+    menuProg();
 }
 
 
@@ -312,11 +333,14 @@ void loop() {
 //-------------------------------------------------------------------------------
 
 void Acquisition(float offset, File dataFile) {
-
+  #ifdef TRS
+    transRamp(1, TR1);
+    transRamp(1, TR2);
+    transRamp(1, TR3);
+  #endif
   float T1 = Tread(therm1);
   float T2 = Tread(therm2);
   float T3 = Tread(therm3);
-
   // parameters of thermal conductivity measurement
   // Q = heat input (watts)
   // L = thickness of sample
@@ -326,7 +350,11 @@ void Acquisition(float offset, File dataFile) {
   float deltaT_1 = T3 - T1;
   float deltaT_2 = T3 - T2;
   float conductivity = (Q) / (A * ((deltaT_1 / L_1) + (deltaT_2 / L_2)));
-
+  #ifdef TRS
+    transRamp(0, TR1);
+    transRamp(0, TR2);
+    transRamp(0, TR3);
+  #endif
 #ifdef LCD
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -687,4 +715,16 @@ float valuef(File myFile) {
   return t;
 }
 
-
+void transRamp(int value, int pin) {
+  if(t == 0) {
+    analogWrite(pin, LOW);
+    #ifdef SER
+      Serial.println("Transistor at pin " + pin + " set to LOW");
+    #endif
+  } else {
+    analogWrite(pin, HIGH);
+    #ifdef SER
+      Serial.println("Transistor at pin " + pin + " set to HIGH");
+    #endif
+  }
+}
