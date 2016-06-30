@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.13 - 20160628
+    Version 0.13.1 - 20160630
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.13 - 20160528";
+String versProg = "0.13.1 - 20160530";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis";
@@ -694,10 +694,6 @@ void Pref() {
   }
   else
   {
-    Serial.println("Missing configuration file on SD card");
-    Serial.print("Creating configuration file: \"");
-    Serial.print(cfgFile);
-    Serial.println("\"");
     UpdatePref();
   }
 }
