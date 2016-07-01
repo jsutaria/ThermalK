@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.13.1 - 20160630
+    Version 0.13.2 - 20160630
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.13.1 - 20160530";
+String versProg = "0.13.2 - 20160530";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis";
@@ -244,11 +244,6 @@ void setup() {
     }
     else
     {
-  #ifdef SER
-      Serial.println("OK");
-  #endif
-    }
-  
     // to use today's date as the filename:
     //nameFile2(0).toCharArray(nameFileData, 13);
     nameFile2(1).toCharArray(nameFileData, 13);
@@ -267,6 +262,7 @@ void setup() {
     Serial.println(nameFileSummary);
     Serial.println();
   #endif
+    }
   
     TmediumInitial = Tread(therm3);
     firstRunSerial();
