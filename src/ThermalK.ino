@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.14.2 - 20160701
+    Version 0.14.3 - 20160701
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.14.2 - 20160701";
+String versProg = "0.14.3 - 20160701";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -169,7 +169,8 @@ char nameFileSummary[13];
 
 // Sets target Temperature after cooldown. This is set as the same as 
 // TEMPERATURENOMINAL. It is later read from preferences.
-float TtargCool = TEMPERATURENOMINAL;  
+float TtargCool = TEMPERATURENOMINAL;
+float minT = 100;
 
 //-------------------------------------------------------------------------------
 //Real time chip
@@ -315,17 +316,29 @@ void loop() {
 
     if (inSerial == 49)
     {
+
+#ifdef TRS
+#ifdef SER
+      Serial.println("Heaters: ON");
+      Serial.println();
+#endif
+      transRamp(1, TR1);
+      transRamp(1, TR2);
+      transRamp(1, TR3);
+#endif
+      
 #ifdef SER
       headerSerial();
 #endif
       float offset = (float) millis() / 1000;
-
       File dataFile = SD.open(nameFileData, FILE_WRITE);
+      
       while (inSerial != 50)
       {
         inSerial = Serial.read();
         Acquisition(offset, dataFile);
       }
+      
       dataFile.println();
       dataFile.close();
       summarySD(offset);
@@ -333,6 +346,17 @@ void loop() {
 #ifdef SER
       Serial.println();
 #endif
+
+#ifdef TRS
+#ifdef SER
+      Serial.println("Heaters: OFF");
+      Serial.println();
+#endif
+      transRamp(0, TR1);
+      transRamp(0, TR2);
+      transRamp(0, TR3);
+#endif
+
       menuProg();
     }
 
@@ -369,11 +393,7 @@ void loop() {
 //-------------------------------------------------------------------------------
 
 void Acquisition(float offset, File dataFile) {
-  #ifdef TRS
-    transRamp(1, TR1);
-    transRamp(1, TR2);
-    transRamp(1, TR3);
-  #endif
+  
   float T1 = Tread(therm1);
   float T2 = Tread(therm2);
   float T3 = Tread(therm3);
@@ -386,11 +406,7 @@ void Acquisition(float offset, File dataFile) {
   float deltaT_1 = T3 - T1;
   float deltaT_2 = T3 - T2;
   float conductivity = (Q) / (A * ((deltaT_1 / L_1) + (deltaT_2 / L_2)));
-  #ifdef TRS
-    transRamp(0, TR1);
-    transRamp(0, TR2);
-    transRamp(0, TR3);
-  #endif
+
 #ifdef LCD
   lcd.clear();
   lcd.setCursor(0, 0);
