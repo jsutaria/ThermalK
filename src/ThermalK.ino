@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.14 - 20160630
+    Version 0.14.1 - 20160701
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.14 - 20160530";
+String versProg = "0.14.1 - 20160701";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -271,6 +271,16 @@ void setup() {
     Serial.println(nameFileData);
     Serial.print("Saving summary: ");
     Serial.println(nameFileSummary);
+    Serial.println();
+    Serial.println("Parameters from SD card used:");
+    Serial.print(" Q - heat input (watts): ");
+    Serial.println(Q);
+    Serial.print(" L_1 - thickness of sample 1: ");
+    Serial.println(L_1,4);
+    Serial.print(" L_2 - thickness of sample 2: ");
+    Serial.println(L_2,4);
+    Serial.print(" Target temperature for cool down (C): ");
+    Serial.println(TtargCool);
     Serial.println();
   #endif
     }
