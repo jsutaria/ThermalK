@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.13.2 - 20160630
+    Version 0.14 - 20160630
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.13.2 - 20160530";
+String versProg = "0.14 - 20160530";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -167,8 +167,8 @@ char nameFileSummary[13];
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000
 
-// Sets target Temperature after cooldown. This is currently set as the same as 
-// TEMPERATURENOMINAL. Can be adjusted to needs.
+// Sets target Temperature after cooldown. This is set as the same as 
+// TEMPERATURENOMINAL. It is later read from preferences.
 float TtargCool = TEMPERATURENOMINAL;  
 
 //-------------------------------------------------------------------------------
@@ -240,6 +240,17 @@ void setup() {
       Serial.println("Card failed, or not present.");
       Serial.println("SD card support disabled.");
       Serial.println();
+      Serial.println("Default parameters used:");
+      Serial.print(" Q - heat input (watts): ");
+      Serial.println(Q);
+      Serial.print(" L_1 - thickness of sample 1: ");
+      Serial.println(L_1,4);
+      Serial.print(" L_2 - thickness of sample 2: ");
+      Serial.println(L_2,4);
+      Serial.print(" Target temperature for cool down (C): ");
+      Serial.println(TtargCool);
+      Serial.println();
+
   #endif
     }
     else
@@ -682,10 +693,11 @@ void Pref() {
     Serial.println("Configuration file found.");
 #endif
 
-    Q = valuef(myFile);
-    L_1 = valuef(myFile);
-    L_2 = valuef(myFile);
-    A = valuef(myFile);
+    Q = valuef(myFile);       // heat input (watts)
+    L_1 = valuef(myFile);     // thickness of sample 1
+    L_2 = valuef(myFile);     // thickness of sample 2
+    A = valuef(myFile);       // surface area/contact area of sample
+    TtargCool=valuef(myFile); // Target temperature for cool down
     myFile.close();
   }
   else
@@ -716,15 +728,15 @@ void UpdatePref() {
   Serial.println("\"");
 #endif
 
-  myFile.println(Q, 6);
-  myFile.println(L_1, 6);   // number of cells
-  myFile.println(L_2, 6); // Offset in current measurement
-  myFile.println(A, 6);     // Max Voltage measured (stopV)
+  myFile.println(Q, 6);         // heat input (watts)
+  myFile.println(L_1, 6);       // thickness of sample 1
+  myFile.println(L_2, 6);       // thickness of sample 2
+  myFile.println(A, 6);         // surface area/contact area of sample
+  myFile.println(TtargCool, 6); // Target temperature for cool down
 
   myFile.close();
 
 }
-
 
 ///////////////////////////////////////////////////////
 // Reads full integers or floats from a line in a file
