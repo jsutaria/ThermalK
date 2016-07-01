@@ -95,7 +95,7 @@
 String versProg = "0.13.2 - 20160530";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
-String developer = "Copyright (C) 2015-2016 Nicola Ferralis";
+String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
 
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 float display_delay = 0.2;  //in seconds - refresh time in serial monitor
@@ -581,12 +581,12 @@ void firstRunSerial()  {
 
 void progInfo() {
 #ifdef SER
-  Serial.println("---------------------------------------------------------");
+  Serial.println("---------------------------------------------------------------");
   Serial.print(nameProg);
   Serial.print(" - v. ");
   Serial.println(versProg);
   Serial.println(developer);
-  Serial.println("---------------------------------------------------------\n");
+  Serial.println("---------------------------------------------------------------\n");
 #endif
 }
 
