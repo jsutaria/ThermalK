@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.14.1 - 20160701
+    Version 0.14.2 - 20160701
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.14.1 - 20160701";
+String versProg = "0.14.2 - 20160701";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -533,7 +533,7 @@ String nameFile2(int a) {
 
   if (a == 2)
   {
-    filename += "Sum";
+    filename += "Summary";
     //filename += a;
   }
   filename += ".csv";
@@ -679,6 +679,8 @@ void writeDateTime(File dataFile) {
   dataFile.print(L_2, 6);
   dataFile.print(",");
   dataFile.print(A, 6);
+  dataFile.print(",");
+  dataFile.print(TtargCool);
   dataFile.println(",");
 }
 
@@ -742,7 +744,7 @@ void UpdatePref() {
   myFile.println(L_1, 6);       // thickness of sample 1
   myFile.println(L_2, 6);       // thickness of sample 2
   myFile.println(A, 6);         // surface area/contact area of sample
-  myFile.println(TtargCool, 6); // Target temperature for cool down
+  myFile.println(TtargCool, 2); // Target temperature for cool down
 
   myFile.close();
 
