@@ -1,5 +1,5 @@
 # ThermalK
-version 0.14.3 - 20160701
+version 0.14.4 - 20160706
 Thermal conductivity monitor
 
 Recommended: Arduino MEGA 2560. Tested on Arduino DUE.
