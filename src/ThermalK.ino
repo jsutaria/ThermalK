@@ -515,9 +515,9 @@ float Tread(int THERMISTORPIN) {
 #ifdef TRS
 void transRamp(int value, int pin) {
   if(value == 0) {
-    analogWrite(pin, LOW);
+    digitalWrite(pin, LOW);
   } else {
-    analogWrite(pin, HIGH);
+    digitalWrite(pin, HIGH);
   }
 }
 #endif
