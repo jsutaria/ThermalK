@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.14.4 - 20160706
+    Version 0.15 - 20160801
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.14.4 - 20160706";
+String versProg = "0.15 - 20160801";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -123,9 +123,9 @@ LiquidCrystal lcd(12, 11, 28, 26, 24, 22);
 // Define pins for the transistors
 //-------------------------------------------------------------------------------
 #ifdef TRS
-#define TR1 A3
-#define TR2 A4
-#define TR3 A5
+#define TR1 7
+#define TR2 6
+#define TR3 5
 #endif
 
 
