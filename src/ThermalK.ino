@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.15 - 20160801
+    Version 0.16 - 20160801
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -85,14 +85,14 @@
 #include "RTClib.h"
 #include <LiquidCrystal.h>
 
-#define LCD   //Uncomment to enable LCD support
+//#define LCD   //Uncomment to enable LCD support
 #define SER   //Uncomment to SERIAL outputsupport
-#define TRS   //Uncomment to enable transistors
+#define RLS   //Uncomment to enable relays
 
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.15 - 20160801";
+String versProg = "0.16 - 20160801";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -120,12 +120,12 @@ LiquidCrystal lcd(12, 11, 28, 26, 24, 22);
 
 
 //-------------------------------------------------------------------------------
-// Define pins for the transistors
+// Define pins for relays
 //-------------------------------------------------------------------------------
-#ifdef TRS
-#define TR1 7
-#define TR2 6
-#define TR3 5
+#ifdef RLS
+#define RL1 7
+#define RL2 6
+#define RL3 5
 #endif
 
 
@@ -196,16 +196,16 @@ void setup() {
     TBits = 1023;
   #endif
 
-  #ifdef TRS
-    Serial.println("Support for transistors: enabled");
-    pinMode(TR1, OUTPUT);
-    pinMode(TR2, OUTPUT);
-    pinMode(TR3, OUTPUT);
-    transRamp(0, TR1);
-    transRamp(0, TR2);
-    transRamp(0, TR3);
+  #ifdef RLS
+    Serial.println("Support for relays: enabled");
+    pinMode(RL1, OUTPUT);
+    pinMode(RL2, OUTPUT);
+    pinMode(RL3, OUTPUT);
+    relayRamp(0, RL1);
+    relayRamp(0, RL2);
+    relayRamp(0, RL3);
   #else
-    Serial.println("Support for transistors: disabled");
+    Serial.println("Support for relays: disabled");
   #endif  
   
   #ifdef LCD
@@ -241,7 +241,7 @@ void setup() {
       Serial.println("Card failed, or not present.");
       Serial.println("SD card support disabled.");
       Serial.println();
-      Serial.println("Default parameters used:");
+      Serial.println("Using default parameters:");
       Serial.print(" Q - heat input (watts): ");
       Serial.println(Q);
       Serial.print(" L_1 - thickness of sample 1: ");
@@ -273,7 +273,7 @@ void setup() {
     Serial.print("Saving summary: ");
     Serial.println(nameFileSummary);
     Serial.println();
-    Serial.println("Parameters from SD card used:");
+    Serial.println("Using parameters from SD card:");
     Serial.print(" Q - heat input (watts): ");
     Serial.println(Q);
     Serial.print(" L_1 - thickness of sample 1: ");
@@ -317,14 +317,14 @@ void loop() {
     if (inSerial == 49)
     {
 
-#ifdef TRS
+#ifdef RLS
 #ifdef SER
       Serial.println("Heaters: ON");
       Serial.println();
 #endif
-      transRamp(1, TR1);
-      transRamp(1, TR2);
-      transRamp(1, TR3);
+      relayRamp(1, RL1);
+      relayRamp(1, RL2);
+      relayRamp(1, RL3);
 #endif
       
 #ifdef SER
@@ -347,14 +347,14 @@ void loop() {
       Serial.println();
 #endif
 
-#ifdef TRS
+#ifdef RLS
 #ifdef SER
       Serial.println("Heaters: OFF");
       Serial.println();
 #endif
-      transRamp(0, TR1);
-      transRamp(0, TR2);
-      transRamp(0, TR3);
+      relayRamp(0, RL1);
+      relayRamp(0, RL2);
+      relayRamp(0, RL3);
 #endif
 
       menuProg();
@@ -373,7 +373,7 @@ void loop() {
       resetFunc();
     }
 
-#ifdef TRS
+#ifdef RLS
     if (inSerial == 53) {
       Serial.println("Cool Down in progress. Press (2) to stop");
       while(inSerial != 50) {
@@ -445,7 +445,7 @@ void Acquisition(float offset, File dataFile) {
 // CoolDown: Run coolers to speed the cooling after acquisition
 //-------------------------------------------------------------------------------
 
-#ifdef TRS
+#ifdef RLS
 void CoolDown(int therm, float Ttarg) {
   float Tmeas = Tread(therm);  
  
@@ -463,13 +463,13 @@ void CoolDown(int therm, float Ttarg) {
   Serial.println(Ttarg);
  
 #endif
-    transRamp(1, TR1);
-    transRamp(1, TR3);
+    relayRamp(1, RL1);
+    relayRamp(1, RL3);
     delay(display_delay * 1000);
     Tmeas = Tread(therm);   
   }
-    transRamp(0, TR1);
-    transRamp(0, TR3);
+    relayRamp(0, RL1);
+    relayRamp(0, RL3);
 }
 #endif
 
@@ -509,11 +509,11 @@ float Tread(int THERMISTORPIN) {
 }
 
 //-------------------------------------------------------------------------------
-// switch transistor 
+// switch relay 
 //-------------------------------------------------------------------------------
 
-#ifdef TRS
-void transRamp(int value, int pin) {
+#ifdef RLS
+void relayRamp(int value, int pin) {
   if(value == 0) {
     digitalWrite(pin, LOW);
   } else {
@@ -631,7 +631,7 @@ void menuProg() {
 #ifdef SER
   Serial.println("---------------------------------------------------------");
   Serial.print("(1) Start; (2) Stop; (3) Info; (4) Reset");
-#ifdef TRS
+#ifdef RLS
   Serial.print("; (5) Cool Down"); 
 #endif
   Serial.println();   
