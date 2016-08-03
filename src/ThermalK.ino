@@ -2,7 +2,7 @@
 /*
     ThermalK: Thermal Conductivity Monitor
 
-    Version 0.16 - 20160801
+    Version 0.17 - 20160803
 
     Copyight (C) 2015-2016  Nicola Ferralis
     ferralis@mit.edu
@@ -92,7 +92,7 @@
 //-------------------------------------------------------------------------------
 //  SYSTEM defined variables
 //-------------------------------------------------------------------------------
-String versProg = "0.16 - 20160801";
+String versProg = "0.17 - 20160803";
 String nameProg = "ThermalK: Thermal Conductivity Monitor";
 String nameProgShort = "ThermalK";
 String developer = "Copyright (C) 2015-2016 Nicola Ferralis <feranick@hotmail.com>";
@@ -138,7 +138,7 @@ LiquidCrystal lcd(12, 11, 28, 26, 24, 22);
 // A = surface area/contact area of sample
 // deltaT = change in Temp from hot to cold side of sample
 float Q = 6.2675;
-float L_1 = 0.005;
+float L_1 = 0.01;
 float L_2 = 0.01;
 float A = 0.0019635;
 
@@ -396,7 +396,7 @@ void Acquisition(float offset, File dataFile) {
   
   float T1 = Tread(therm1);
   float T2 = Tread(therm2);
-  float T3 = Tread(therm3);
+  float T3 = Tread(therm3); //This is for the heater
   // parameters of thermal conductivity measurement
   // Q = heat input (watts)
   // L = thickness of sample
@@ -419,9 +419,9 @@ void Acquisition(float offset, File dataFile) {
   Serial.print(", ");
   Serial.print(T1);
   Serial.print(", ");
-  Serial.print(T2);
-  Serial.print(", ");
   Serial.print(T3);
+  Serial.print(", ");
+  Serial.print(T2);
   Serial.print(", ");
   Serial.print(conductivity);
   Serial.println();
@@ -431,9 +431,9 @@ void Acquisition(float offset, File dataFile) {
   dataFile.print(", ");
   dataFile.print(T1);
   dataFile.print(", ");
-  dataFile.print(T2);
-  dataFile.print(", ");
   dataFile.print(T3);
+  dataFile.print(", ");
+  dataFile.print(T2);
   dataFile.print(", ");
   dataFile.print(conductivity);
   dataFile.println();
