@@ -107,14 +107,16 @@ public class ThermalK extends JArduino {
 	*/
 	public static int inSerial = 0;
 	
-	private Runnable r = () -> {
-		Scanner br = new Scanner(System.in);
-		while(true) {
-			inSerial = br.nextInt();
-			System.out.println(inSerial);
-			if(inSerial == 4) break;
+	private Runnable r = new Runnable() {
+		public void run() {
+			Scanner br = new Scanner(System.in);
+			while(true) {
+				inSerial = br.nextInt();
+				System.out.println(inSerial);
+				if(inSerial == 4) break;
+			}
+			br.close();
 		}
-		br.close();
 	};
 	
 	private Thread t = new Thread(r);
