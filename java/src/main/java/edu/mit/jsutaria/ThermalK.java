@@ -165,7 +165,7 @@ public class ThermalK extends JArduino {
 				break;
 			case 5:
 				inSerial = 0;
-				if(!RLS) logln("Error, unknown input");
+	 			if(!RLS) logln("Error, unknown input");
 				else state = State.COOL_DOWN;
 				break;
 			default: 
